@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: zakaz-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: BOT_TOKEN
+        value: ${BOT_TOKEN}
+      - key: SECRET_KEY
+        generateValue: true
+    plan: free

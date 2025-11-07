@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Новое задание - Учебный Портал{% endblock %}
+
+{% block extra_css %}
+<style>
+    .subject-checkbox {
+        margin-right: 10px;
+    }
+    .subjects-container {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 10px;
+        margin-bottom: 1rem;
+    }
+    .subjects-container label {
+        display: block;
+        padding: 5px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h5 mb-0">Создание нового задания</h2>
+            </div>
+            <div class="card-body p-4">
+                <form id="assignmentForm" method="POST" action="{{ url_for('new_assignment') }}">
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="course" class="form-label">Курс <span class="text-danger">*</span></label>
+                            <select class="form-select" id="course" name="course" required>
+                                <option value="" selected disabled>Выберите курс</option>
+                                {% for course in courses %}
+                                    <option value="{{ course }}">{{ course }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="semester" class="form-label">Семестр <span class="text-danger">*</span></label>
+                            <select class="form-select" id="semester" name="semester" required disabled>
+                                <option value="" selected disabled>Сначала выберите курс</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="faculty" class="form-label">Факультет <span class="text-danger">*</span></label>
+                            <select class="form-select" id="faculty" name="faculty" required>
+                                <option value="" selected disabled>Выберите факультет</option>
+                                {% for faculty in faculties %}
+                                    <option value="{{ faculty }}">{{ faculty }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Предмет(ы) <span class="text-danger">*</span></label>
+                            <div class="subjects-container" id="subjectsContainer">
+                                <div class="text-muted text-center py-3">Выберите факультет для загрузки предметов</div>
+                            </div>
+                            <input type="hidden" id="selectedSubjects" name="subjects">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="deadline" class="form-label">Срок сдачи <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="deadline" name="deadline" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Способ загрузки задания <span class="text-danger">*</span></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="task_source" id="uploadOption" value="upload" checked>
+                                <label class="form-check-label" for="uploadOption">
+                                    Загрузить файл
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="task_source" id="moodleOption" value="moodle">
+                                <label class="form-check-label" for="moodleOption">
+                                    Войти в Moodle
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-4">
+                            <label for="work_type" class="form-label">Тип работы <span class="text-danger">*</span></label>
+                            <select class="form-select" id="work_type" name="work_type" required>
+                                <option value="" selected disabled>Выберите тип работы</option>
+                                {% for work_type in work_types %}
+                                    <option value="{{ work_type }}">{{ work_type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-md-2">Отмена</a>
+                        <button type="submit" class="btn btn-primary">Создать задание</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Load semesters when course is selected
+        $('#course').change(function() {
+            const course = $(this).val();
+            if (course) {
+                const courseNum = parseInt(course);
+                const sem1 = (courseNum * 2 - 1) + ' семестр';
+                const sem2 = (courseNum * 2) + ' семестр';
+                
+                const $semesterSelect = $('#semester');
+                $semesterSelect.empty().append(
+                    $('<option>', { value: '', text: 'Выберите семестр', disabled: true, selected: true }),
+                    $('<option>', { value: sem1, text: sem1 }),
+                    $('<option>', { value: sem2, text: sem2 })
+                ).prop('disabled', false);
+            } else {
+                $('#semester').prop('disabled', true).html('<option value="" selected disabled>Сначала выберите курс</option>');
+            }
+        });
+
+        // Load subjects when faculty is selected
+        $('#faculty').change(function() {
+            const faculty = $(this).val();
+            if (faculty) {
+                $.get('/api/subjects', { faculty: faculty }, function(subjects) {
+                    const $container = $('#subjectsContainer');
+                    $container.empty();
+                    
+                    if (subjects && subjects.length > 0) {
+                        subjects.forEach(function(subject) {
+                            const id = 'subject-' + subject.replace(/\s+/g, '-').toLowerCase();
+                            $container.append(
+                                $('<div>', { class: 'form-check' }).append(
+                                    $('<input>', {
+                                        type: 'checkbox',
+                                        class: 'form-check-input subject-checkbox',
+                                        id: id,
+                                        value: subject
+                                    }),
+                                    $('<label>', {
+                                        class: 'form-check-label',
+                                        'for': id,
+                                        text: subject
+                                    })
+                                )
+                            );
+                        });
+                        
+                        // Update hidden input when checkboxes change
+                        $('.subject-checkbox').change(function() {
+                            const selected = [];
+                            $('.subject-checkbox:checked').each(function() {
+                                selected.push($(this).val());
+                            });
+                            $('#selectedSubjects').val(selected.join(','));
+                        });
+                    } else {
+                        $container.html('<div class="text-muted text-center py-3">Нет доступных предметов</div>');
+                    }
+                });
+            }
+        });
+
+        // Form validation
+        $('#assignmentForm').submit(function(e) {
+            const selectedSubjects = $('.subject-checkbox:checked').length;
+            if (selectedSubjects === 0) {
+                e.preventDefault();
+                alert('Пожалуйста, выберите хотя бы один предмет');
+                return false;
+            }
+            return true;
+        });
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        $('#deadline').attr('min', today);
+    });
+</script>
+{% endblock %}

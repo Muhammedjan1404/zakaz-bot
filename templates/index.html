@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Учебный Портал{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">Добро пожаловать в Учебный Портал</h1>
+            <p class="lead mb-5">Удобная плаформа для управления учебными заданиями и сроками сдачи</p>
+            
+            {% if not current_user.is_authenticated %}
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-sm-3">Войти</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-lg px-4">Зарегистрироваться</a>
+                </div>
+            {% else %}
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 me-sm-3">Мои задания</a>
+                    <a href="{{ url_for('new_assignment') }}" class="btn btn-success btn-lg px-4">Создать задание</a>
+                </div>
+            {% endif %}
+            
+            <div class="row mt-5">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-journal-text display-4 text-primary mb-3"></i>
+                            <h3>Удобное управление</h3>
+                            <p>Создавайте и отслеживайте все ваши учебные задания в одном месте</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-calendar-check display-4 text-success mb-3"></i>
+                            <h3>Контроль сроков</h3>
+                            <p>Никогда не пропускайте дедлайны с настройкой уведомлений</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-cloud-upload display-4 text-info mb-3"></i>
+                            <h3>Загрузка заданий</h3>
+                            <p>Загружайте файлы напрямую или получайте доступ через Moodle</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
